@@ -1,0 +1,280 @@
+Query 1
+
+SELECT channelGrouping,
+COUNT(DISTINCT fullVisitorId) AS Users,
+COUNT(visitId) AS Sessions
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801` 
+GROUP BY 1
+ORDER BY Users DESC
+
+
+
+
+Query 2
+
+
+
+SELECT trafficSource.source,
+trafficSource.medium,
+channelGrouping,
+COUNT(DISTINCT fullVisitorId) AS Users,
+COUNT(visitId) AS Sessions,
+SUM(totals.pageviews) AS Pageviews
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801` 
+GROUP BY 1, 2, 3
+ORDER BY Users DESC
+
+
+
+
+Query 3
+
+
+
+SELECT CASE 
+WHEN trafficSource.source = '(direct)' THEN 'Direct' 
+WHEN trafficSource.source = 'youtube.com' THEN 'YouTube'
+ELSE 'Others'
+END AS ChannelType,
+trafficSource.source,
+trafficSource.medium,
+channelGrouping,
+COUNT(DISTINCT fullVisitorId) AS Users,
+COUNT(visitId) AS Sessions,
+SUM(totals.pageviews) AS Pageviews
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801` 
+GROUP BY 2, 3, 4
+ORDER BY Users DESC
+
+
+
+
+Query 4
+
+
+
+SELECT p.v2ProductName,
+p.v2ProductCategory,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue,
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+
+
+
+
+Query 5
+
+
+
+SELECT p.v2ProductName,
+p.v2ProductCategory,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue,
+ROUND(SUM(p.localProductRevenue/1000000) / SUM(p.productQuantity), 1) AS Revenue_By_Quantity,
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+
+
+
+
+Query 6
+
+
+
+SELECT p.v2ProductName,
+p.v2ProductCategory,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue,
+ROUND(SUM(p.localProductRevenue/1000000) / SUM(p.productQuantity), 1) AS Revenue_By_Quantity,
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+WHERE p.v2ProductName = 'Google Men\'s  Zip Hoodie'
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+
+
+
+
+Query 7
+
+
+
+SELECT p.v2ProductName,
+p.v2ProductCategory,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue,
+ROUND(SUM(p.localProductRevenue/1000000) / SUM(p.productQuantity), 1) AS Revenue_By_Quantity,
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+WHERE p.v2ProductName = 'Google Men\'s  Zip Hoodie' AND p.v2ProductCategory = 'Apparel'
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+LIMIT 10
+
+
+
+
+Query 8
+
+
+
+SELECT 
+fullVisitorId,
+h.transaction.transactionId As TransactionId,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue
+
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+WHERE p.v2ProductName = 'Google Men\'s  Zip Hoodie' AND p.v2ProductCategory = 'Apparel' AND h.transaction.transactionId IS NOT NULL
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+LIMIT 10
+
+
+
+
+Query 9
+
+
+
+
+WITH buyer_users AS (
+SELECT 
+fullVisitorId,
+h.transaction.transactionId As TransactionId,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue
+
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+WHERE p.v2ProductName = 'Google Men\'s  Zip Hoodie' AND p.v2ProductCategory = 'Apparel' AND h.transaction.transactionId IS NOT NULL
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+),
+
+high_value_more_then_one AS (
+SELECT * FROM buyer_users WHERE buyer_users.Quantity > 1
+
+)
+
+SELECT * FROM high_value_more_then_one
+
+
+
+
+Query 10
+
+
+
+WITH buyer_users AS (
+SELECT 
+fullVisitorId,
+h.transaction.transactionId As TransactionId,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue
+
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+WHERE p.v2ProductName = 'Google Men\'s  Zip Hoodie' AND p.v2ProductCategory = 'Apparel' AND h.transaction.transactionId IS NOT NULL
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+),
+
+high_value_more_then_one AS (
+SELECT * FROM buyer_users WHERE buyer_users.Quantity > 1
+
+)
+
+SELECT a.fullVisitorId AS User_ID,
+a.transactionId AS Transaction_ID,
+b.firstname AS First_Name,
+b.lastname AS Last_Name,
+a.Quantity AS Quantity,
+b.email AS Email
+
+FROM high_value_more_then_one AS a
+JOIN `joins.sample_crm` AS b ON a.TransactionId = b.transactionId
+
+
+
+
+Query 11
+
+WITH buyer_users AS (
+SELECT 
+fullVisitorId,
+h.transaction.transactionId As TransactionId,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue
+
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+WHERE p.v2ProductName = 'Google Men\'s  Zip Hoodie' AND p.v2ProductCategory = 'Apparel' AND h.transaction.transactionId IS NOT NULL
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+),
+
+high_value_more_then_one AS (
+SELECT * FROM buyer_users WHERE buyer_users.Quantity > 1
+)
+
+SELECT 
+a.fullVisitorId AS User_ID,
+a.transactionId AS Transaction_ID,
+b.firstname AS First_Name,
+b.lastname AS Last_Name,
+a.Quantity AS Quantity,
+b.email AS Email
+
+FROM high_value_more_then_one AS a
+JOIN `joins.sample_crm` AS b ON a.TransactionId = b.transactionId
+
+
+
+
+
+Query 11*
+
+WITH buyer_users AS (
+SELECT 
+fullVisitorId,
+h.transaction.transactionId As TransactionId,
+SUM(p.ProductQuantity) AS Quantity,
+SUM(p.localProductRevenue/1000000) AS Revenue
+
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST(hits) AS h,
+UNNEST(h.product) AS p
+WHERE p.v2ProductName = 'Google Men\'s  Zip Hoodie' AND p.v2ProductCategory = 'Apparel' AND h.transaction.transactionId IS NOT NULL
+GROUP BY 1, 2
+ORDER BY Revenue DESC
+),
+
+high_value_more_then_one AS (
+SELECT * FROM buyer_users WHERE buyer_users.Quantity > 1
+)
+
+SELECT 
+--a.fullVisitorId AS User_ID,
+--a.transactionId AS Transaction_ID,
+--b.firstname AS First_Name,
+--b.lastname AS Last_Name,
+--a.Quantity AS Quantity,
+b.email AS Email
+
+FROM high_value_more_then_one AS a
+JOIN `joins.sample_crm` AS b ON a.TransactionId = b.transactionId
